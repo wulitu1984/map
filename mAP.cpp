@@ -4,6 +4,7 @@
 #include <string>
 #include <dirent.h>
 #include <algorithm>    
+#include <numeric>
 #include <map>
 #include "mAP.h"
 
@@ -192,7 +193,7 @@ std::vector<std::pair<int, float>> calc_mAP_(std::vector<groud_truth>& gts, grou
     std::vector<std::pair<int, float>> mAP;
     for (auto cls : gt_classes) {
         int nd = dt_info.dt_counter_per_class[cls];
-        std::vector<float> tp(nd, 0), fp(nd, 0);
+        std::vector<float> tp(nd, 0), fp(nd, 0), score(nd, 0);
 
         int pos = 0;
         int fp_sum = 0;
@@ -229,9 +230,24 @@ std::vector<std::pair<int, float>> calc_mAP_(std::vector<groud_truth>& gts, grou
                     fp[pos] = 1;
                     fp_sum += 1;
                 }
+                score[pos] = db.score;
                 pos += 1;
             }
         }
+        //sort tp/fp by score
+        std::vector<int> idx(nd);
+        std::iota(idx.begin(), idx.end(), 0);
+        std::sort(idx.begin(), idx.end(), [&score](int i1, int i2) {return score[i1] > score[i2]; });
+        std::vector<float> tp_sorted(nd), fp_sorted(nd);
+        for (int i = 0; i < nd; i++) {
+            tp_sorted[i] = tp[idx[i]];
+            fp_sorted[i] = fp[idx[i]];
+        }
+        for (int i = 0; i < nd; i++) {
+            tp[i] = tp_sorted[i];
+            fp[i] = fp_sorted[i];
+        }
+
         std::cout << "cls " << cls << " tp_sum " << tp_sum << " fp_sum " << fp_sum << std::endl;
         for (int i = 0; i < 32; i++) {
             std::cout << tp[i] << ",";
