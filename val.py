@@ -476,6 +476,8 @@ for class_index, class_name in enumerate(gt_classes):
                 error(error_msg)
         lines = file_lines_to_list(txt_file)
         for line in lines:
+            if line[0] == "#":
+                continue
             try:
                 tmp_class_name, confidence, left, top, right, bottom = line.split()
             except ValueError:

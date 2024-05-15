@@ -60,6 +60,7 @@ std::pair<std::vector<groud_truth>, groud_truth_info> get_ground_truths(const st
     std::vector<groud_truth> ground_truths;
     groud_truth_info info;
     std::vector<std::string> files = get_files_in_path(ground_truths_path);
+    //std::cout << "files in " << ground_truths_path << " " << files.size() << std::endl;
     int file_id = 0;
     for (const auto& file : files)
     {
@@ -71,8 +72,9 @@ std::pair<std::vector<groud_truth>, groud_truth_info> get_ground_truths(const st
         {
             std::istringstream iss(line);
             //class_name, left, top, right, bottom
-            int cls;
-            iss >> cls;
+            float cls_f;
+            iss >> cls_f;
+            int cls = (int)cls_f;
             float left, top, right, bottom;
             iss >> left >> top >> right >> bottom;
             bbox b = { cls, 1, {left, top, right, bottom}, false };
@@ -105,6 +107,7 @@ std::pair<std::vector<detection_result>, detection_result_info> get_detection_re
     std::vector<detection_result> detection_results;
     detection_result_info info;
     std::vector<std::string> files = get_files_in_path(detection_results_path);
+    //std::cout << "files in " << detection_results_path << " " << files.size() << std::endl;
     int file_id = 0;
     for (const auto& file : files)
     {
@@ -115,9 +118,13 @@ std::pair<std::vector<detection_result>, detection_result_info> get_detection_re
         while (std::getline(ifs, line))
         {
             std::istringstream iss(line);
+            //if line start with #, skip
+            if (line[0] == '#')
+                continue;
             //class_name, score, left, top, right, bottom
-            int cls;
-            iss >> cls;
+            float cls_f;
+            iss >> cls_f;
+            int cls = (int)cls_f;
             float score;
             iss >> score;
             float left, top, right, bottom;
