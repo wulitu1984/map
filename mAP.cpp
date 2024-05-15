@@ -193,6 +193,10 @@ std::vector<std::pair<int, float>> calc_mAP_(std::vector<groud_truth>& gts, grou
     std::vector<std::pair<int, float>> mAP;
     for (auto cls : gt_classes) {
         int nd = dt_info.dt_counter_per_class[cls];
+        if (nd == 0) {
+            mAP.push_back(std::make_pair(cls, 0));
+            continue;
+        }
         std::vector<float> tp(nd, 0), fp(nd, 0), score(nd, 0);
 
         int pos = 0;
@@ -234,6 +238,7 @@ std::vector<std::pair<int, float>> calc_mAP_(std::vector<groud_truth>& gts, grou
                 pos += 1;
             }
         }
+
         //sort tp/fp by score
         std::vector<int> idx(nd);
         std::iota(idx.begin(), idx.end(), 0);
@@ -247,17 +252,6 @@ std::vector<std::pair<int, float>> calc_mAP_(std::vector<groud_truth>& gts, grou
             tp[i] = tp_sorted[i];
             fp[i] = fp_sorted[i];
         }
-
-        std::cout << "cls " << cls << " tp_sum " << tp_sum << " fp_sum " << fp_sum << std::endl;
-        for (int i = 0; i < 32; i++) {
-            std::cout << tp[i] << ",";
-        }
-        std::cout << std::endl;
-        for (int i = 0; i < 32; i++) {
-            std::cout << fp[i] << ",";
-        }
-        std::cout << std::endl;
-
 
         std::vector<float> rec(nd, 0), prec(nd, 0);
 
@@ -273,13 +267,16 @@ std::vector<std::pair<int, float>> calc_mAP_(std::vector<groud_truth>& gts, grou
             fp[i] += cumsum;
             cumsum += val;
         }
+
         for (int i = 0; i < nd; i++) {
-            rec[i] = tp[i] / gt_info.gt_counter_per_class[cls];
-            prec[i] = tp[i] / (fp[i] + tp[i]);
+            if (gt_info.gt_counter_per_class[cls] > 0)
+                rec[i] = tp[i] / gt_info.gt_counter_per_class[cls];
+            if (tp[i] + fp[i] > 0)
+                prec[i] = tp[i] / (fp[i] + tp[i]);
         }
 
         auto ap = voc_ap(rec, prec);
-        std::cout << "cls " << cls << " ap " << ap << std::endl;
+        mAP.push_back(std::make_pair(cls, ap));
     }
 
     return mAP;
